@@ -1,0 +1,30 @@
+{
+  "name": "maylan-antispam-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Telegram moderation bot: media rules per forum topic, mutes, bans, warns, antiflood",
+  "license": "GPL-3.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "dev": "tsx watch src/dev.ts",
+    "start": "tsx src/dev.ts",
+    "set-webhook": "tsx scripts/set-webhook.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@grammyjs/auto-retry": "^2.0.2",
+    "@upstash/redis": "^1.41.0",
+    "@vercel/functions": "^3.11.1",
+    "grammy": "^1.46.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}
