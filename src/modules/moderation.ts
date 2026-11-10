@@ -19,8 +19,14 @@ const WARNS_TTL = 90 * 86400;
 const undoButton = (kind: string, userId: number) => new InlineKeyboard().text("Снять", `undo:${kind}:${userId}`);
 const reasonLine = (reason?: string) => (reason ? `\nПричина: ${escapeHtml(reason)}` : "");
 const forTime = (duration?: number) => (duration ? `на ${formatDuration(duration)}` : "навсегда");
-const byAdmin = (ctx: Context) =>
-  ctx.from && !ctx.msg?.sender_chat ? ` (админ ${mention(ctx.from.id, displayName(ctx.from))})` : "";
+/** Кто выполнил действие — только для мод-лога, в группе админ не упоминается. */
+const byAdmin = (ctx: Context) => {
+  if (ctx.msg?.sender_chat) {
+    const sig = ctx.msg.author_signature;
+    return ` (анонимный админ${sig ? ` «${escapeHtml(sig)}»` : ""})`;
+  }
+  return ctx.from ? ` (админ ${mention(ctx.from.id, displayName(ctx.from))})` : "";
+};
 
 /** Права по умолчанию для /ro off, если резервной копии нет: всё, кроме управления группой. */
 const MEMBER_DEFAULTS: ChatPermissions = {
@@ -267,8 +273,9 @@ moderation.callbackQuery(/^undo:(mute|ban|mban|warn):(\d+)$/, async (ctx) => {
   const admin = displayName(ctx.from);
   const message = ctx.callbackQuery.message;
   if (message && "text" in message && message.text) {
-    // дописываем строку, сохраняя форматирование исходного текста; кнопка исчезает
-    await ctx.editMessageText(`${message.text}\n\n✅ Отменено: ${admin}`, { entities: message.entities }).catch(() => {});
+    // дописываем строку, сохраняя форматирование исходного текста; кнопка исчезает.
+    // Кто отменил — пишем только в мод-лог.
+    await ctx.editMessageText(`${message.text}\n\n✅ Отменено`, { entities: message.entities }).catch(() => {});
   }
   await logAction(
     ctx.api,
