@@ -137,6 +137,32 @@ describe("bot", () => {
     expect(until).toBeLessThanOrEqual(601);
   });
 
+  it("admin is named only in the mod log, never in the group", async () => {
+    const LOG = -1009999999999;
+    await send(ADMIN, command(`/setlog ${LOG}`));
+    const target = await send(PLAYER, { text: "привет" });
+    calls = [];
+    await send(ADMIN, { ...command("/mute 10m"), reply_to_message: target as never });
+    await bot.handleUpdate({
+      update_id: ++updateId,
+      callback_query: {
+        id: "cb",
+        from: ADMIN,
+        chat_instance: "x",
+        data: `undo:mute:${PLAYER.id}`,
+        message: { message_id: 555, date: 0, chat: CHAT, from: bot.botInfo, text: "🔇 Steve замучен на 10 мин." },
+      },
+    } as Update);
+
+    const toGroup = calls.filter(
+      (c) => (c.method === "sendMessage" || c.method === "editMessageText") && c.payload.chat_id === CHAT.id,
+    );
+    const toLog = calls.filter((c) => c.method === "sendMessage" && c.payload.chat_id === LOG);
+    expect(toGroup.length).toBeGreaterThan(0);
+    for (const c of toGroup) expect(String(c.payload.text)).not.toContain(ADMIN.first_name);
+    expect(toLog.some((c) => String(c.payload.text).includes(ADMIN.first_name))).toBe(true);
+  });
+
   it("/mute @username works once the bot has seen the user", async () => {
     await send(PLAYER, { text: "привет" });
     calls = [];
